@@ -885,7 +885,6 @@ dependencies = [
  "futures",
  "humantime-serde",
  "log",
- "rand",
  "reqwest",
  "serde",
  "serde_yaml",

@@ -13,7 +13,6 @@ env_logger = "0.7.1"
 futures = "0.3.5"
 humantime-serde = "1.0.0"
 log = "0.4.8"
-rand = "0.7.3"
 reqwest = { version = "0.10.6", features = [ "json" ] }
 serde = { version = "1.0.110", features = [ "derive" ] }
 serde_yaml = "0.8.12"
