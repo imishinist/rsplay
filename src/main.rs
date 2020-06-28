@@ -12,6 +12,15 @@ fn get_option(matches: ArgMatches) -> CommandOption {
     }
 }
 
+async fn do_main(scenarios: Vec<scenario::Scenario>) {
+    let tasks = scenarios
+        .into_iter()
+        .map(|scenario| scenario::run(scenario))
+        .collect::<Vec<_>>();
+
+    futures::future::join_all(tasks).await;
+}
+
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
     env_logger::init();
@@ -33,12 +42,6 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         err
     })?;
 
-    let tasks = scenarios
-        .into_iter()
-        .map(|scenario| scenario::run(scenario))
-        .collect::<Vec<_>>();
-
-    futures::future::join_all(tasks).await;
-
+    do_main(scenarios).await;
     Ok(())
 }

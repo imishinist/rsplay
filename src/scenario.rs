@@ -13,7 +13,7 @@ pub struct Scenario {
 
     exit: ExitKind,
 
-    throughput: u32,
+    pace: Pace,
 
     disable_keepalive: bool,
     #[serde(with = "humantime_serde")]
@@ -32,6 +32,34 @@ impl Scenario {
     pub fn url(&self) -> &String {
         &self.url
     }
+
+    pub fn get_pace(&self) -> impl pace::Pacer {
+        match self.pace {
+            Pace::Rate {freq, per} => {
+                pace::Rate{freq, per}
+            }
+        }
+    }
+
+    pub fn duration(&self) -> Duration {
+        match self.exit {
+            ExitKind::Period(t) => t,
+            ExitKind::Count(cnt) => {
+                let sec = cnt as f64 / self.get_pace().rate(Duration::from_secs(0));
+                Duration::from_secs(sec as u64)
+            }
+        }
+    }
+}
+
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
+pub enum Pace {
+    #[serde(rename = "rate")]
+    Rate{
+        freq: u64,
+        #[serde(with = "humantime_serde")]
+        per: Duration,
+    },
 }
 
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
@@ -54,14 +82,8 @@ pub fn load<P: AsRef<Path>>(filename: P) -> anyhow::Result<Vec<Scenario>> {
 }
 
 pub async fn run(scenario: Scenario) {
-    let pacer = pace::Rate {
-        freq: scenario.throughput as u64,
-        ..Default::default()
-    };
-    let run_duration = match scenario.exit {
-        ExitKind::Period(t) => t,
-        ExitKind::Count(cnt) => Duration::from_secs(cnt as u64),
-    };
+    let pacer = scenario.get_pace();
+    let run_duration = scenario.duration();
 
     let message_size = 20;
     let (mut tx, mut rx) = tokio::sync::mpsc::channel(message_size);
@@ -83,8 +105,8 @@ pub async fn run(scenario: Scenario) {
             let (wait, stop) = pacer.pace(elapsed, count);
             if stop {
                 info!(
-                    "stop by pacer: pacer={:?}, elapsed={:?}, hits={}",
-                    pacer, elapsed, count
+                    "stop by pacer: elapsed={:?}, hits={}",
+                    elapsed, count
                 );
                 return;
             }
