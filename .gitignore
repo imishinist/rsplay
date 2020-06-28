@@ -1,0 +1,4 @@
+/target
+scenario.yml
+.envrc
+.env
