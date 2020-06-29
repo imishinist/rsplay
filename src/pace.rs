@@ -44,6 +44,10 @@ impl Pacer for Rate {
 
         let delta = Duration::from_nanos((hits + 1) * interval as u64);
 
+        if delta < elapsed {
+            return (immediately, false);
+        }
+
         (delta.sub(elapsed), false)
     }
 
