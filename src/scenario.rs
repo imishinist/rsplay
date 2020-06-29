@@ -1,5 +1,5 @@
-use crate::{pace, runner};
 use crate::pace::Pacer;
+use crate::{pace, runner};
 use serde::{Deserialize, Serialize};
 use std::fs::File;
 use std::path::Path;
@@ -34,9 +34,7 @@ impl Scenario {
 
     pub fn get_pace(&self) -> impl pace::Pacer {
         match self.pace {
-            Pace::Rate {freq, per} => {
-                pace::Rate{freq, per}
-            }
+            Pace::Rate { freq, per } => pace::Rate { freq, per },
         }
     }
 
@@ -54,7 +52,7 @@ impl Scenario {
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
 pub enum Pace {
     #[serde(rename = "rate")]
-    Rate{
+    Rate {
         freq: u64,
         #[serde(with = "humantime_serde")]
         per: Duration,
@@ -83,6 +81,5 @@ pub fn load<P: AsRef<Path>>(filename: P) -> anyhow::Result<Vec<Scenario>> {
 pub async fn run(scenario: Scenario) {
     let pacer = scenario.get_pace();
     let duration = scenario.duration();
-    runner::Runner::new()
-        .run(scenario, pacer, duration).await;
+    runner::Runner::new().run(scenario, pacer, duration).await;
 }

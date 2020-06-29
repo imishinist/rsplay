@@ -17,3 +17,4 @@ reqwest = { version = "0.10.6", features = [ "json" ] }
 serde = { version = "1.0.110", features = [ "derive" ] }
 serde_yaml = "0.8.12"
 tokio = { version = "0.2.21", features = [ "full" ] }
+spmc = "0.3.0"
