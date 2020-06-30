@@ -23,8 +23,7 @@ impl Runner {
             .pool_idle_timeout(scenario.idle_timeout)
             .build()
             .unwrap();
-        let url = scenario.url;
-
+        let url = scenario.url();
         info!("start scenario run");
         tokio::spawn(async move {
             let start = std::time::Instant::now();
@@ -57,8 +56,8 @@ impl Runner {
         let workers = (0..2)
             .map(|_| {
                 let client = client.clone();
-                let url = url.clone();
                 let rx = rx.clone();
+                let url = url.clone();
                 tokio::spawn(async move {
                     info!("worker spawn");
                     while let Ok(_) = rx.recv() {

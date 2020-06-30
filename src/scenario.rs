@@ -4,11 +4,38 @@ use serde::{Deserialize, Serialize};
 use std::fs::File;
 use std::path::Path;
 use std::time::Duration;
+use reqwest::Url;
+
+mod url_format {
+    use serde::{self, Deserialize, Serializer, Deserializer};
+    use reqwest::Url;
+
+    pub fn serialize<S>(
+        url: &Url,
+        serializer: S,
+    ) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer{
+        let url_str = url.as_str();
+        serializer.serialize_str(url_str)
+    }
+
+    pub fn deserialize<'de, D>(
+        deserializer: D,
+    ) -> Result<Url, D::Error>
+    where
+        D: Deserializer<'de> {
+        let s = String::deserialize(deserializer)?;
+        Url::parse(s.as_str()).map_err(serde::de::Error::custom)
+    }
+}
 
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
 pub struct Scenario {
     pub name: String,
-    pub url: String,
+
+    #[serde(with = "url_format")]
+    pub url: Url,
 
     pub exit: ExitKind,
 
@@ -28,7 +55,7 @@ impl Scenario {
         &self.name
     }
 
-    pub fn url(&self) -> &String {
+    pub fn url(&self) -> &Url {
         &self.url
     }
 
