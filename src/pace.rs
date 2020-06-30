@@ -57,7 +57,7 @@ impl Pacer for Rate {
 }
 
 #[cfg(test)]
-mod test {
+mod tests {
     fn float_eq(x: f64, y: f64) -> bool {
         println!("{} {}", x, y);
 
