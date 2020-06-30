@@ -1,5 +1,5 @@
 use crate::pace::Pacer;
-use crate::scenario::Scenario;
+use crate::data::Scenario;
 use log::{error, info};
 use std::time::Duration;
 

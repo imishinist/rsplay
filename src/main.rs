@@ -1,6 +1,6 @@
 use clap::{value_t_or_exit, App, Arg, ArgMatches};
 use log::error;
-use rsplay::scenario;
+use rsplay::{scenario, data};
 
 struct CommandOption {
     scenario_file: String,
@@ -12,7 +12,7 @@ fn get_option(matches: ArgMatches) -> CommandOption {
     }
 }
 
-async fn do_main(scenarios: Vec<scenario::Scenario>) {
+async fn do_main(scenarios: Vec<data::Scenario>) {
     let tasks = scenarios
         .into_iter()
         .map(|scenario| scenario::run(scenario))
@@ -37,7 +37,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         );
 
     let opt = get_option(app.get_matches());
-    let scenarios = scenario::load(opt.scenario_file).map_err(|err| {
+    let scenarios = data::load(opt.scenario_file).map_err(|err| {
         error!("load scenario error: {:?}", err);
         err
     })?;
