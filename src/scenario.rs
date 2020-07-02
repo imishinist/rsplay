@@ -1,9 +1,10 @@
 use crate::data::Scenario;
-use crate::runner;
+use crate::{runner, pace};
+use crate::pace::Pacer;
 
 
 pub async fn run(scenario: Scenario) {
-    let pacer = scenario.get_pace();
+    let pace = scenario.pace.clone();
     let duration = scenario.duration();
-    runner::Runner::new().run(scenario, pacer, duration).await;
+    runner::Runner::new().run(scenario, pace, duration).await;
 }

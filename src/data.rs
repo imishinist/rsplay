@@ -24,7 +24,7 @@ pub struct Scenario {
     pub idle_timeout: Option<Duration>,
 
     #[serde(default)]
-    validation: Option<Vec<ValidationDef>>,
+    validation: Option<Vec<Validation>>,
 }
 
 impl Scenario {
@@ -36,17 +36,11 @@ impl Scenario {
         &self.url
     }
 
-    pub fn get_pace(&self) -> impl pace::Pacer {
-        match self.pace {
-            Pace::Rate { freq, per } => pace::Rate { freq, per },
-        }
-    }
-
     pub fn duration(&self) -> Duration {
         match self.exit {
             ExitKind::Period(t) => t,
             ExitKind::Count(cnt) => {
-                let sec = cnt as f64 / self.get_pace().rate(Duration::from_secs(0));
+                let sec = cnt as f64 / self.pace.rate(Duration::from_secs(0));
                 Duration::from_secs(sec as u64)
             }
         }
@@ -62,6 +56,10 @@ pub enum Pace {
         #[serde(with = "humantime_serde")]
         per: Duration,
     },
+    Linear {
+        a: f64,
+        b: f64,
+    }
 }
 
 impl Default for Pace {
@@ -71,6 +69,24 @@ impl Default for Pace {
         Rate {
             freq: 1,
             per: Duration::from_secs(1),
+        }
+    }
+}
+
+impl Pacer for Pace {
+    fn pace(&self, elapsed: Duration, hits: u64) -> (Duration, bool) {
+        use Pace::*;
+        match self {
+            Rate { freq, per } => pace::Rate {freq: freq.clone(), per: per.clone()  }.pace(elapsed, hits),
+            Linear { a, b } => pace::Linear { a: a.clone(), b: b.clone() }.pace(elapsed, hits),
+        }
+    }
+
+    fn rate(&self, elapsed: Duration) -> f64 {
+        use Pace::*;
+        match self {
+            Rate { freq, per } => pace::Rate {freq: freq.clone(), per: per.clone()  }.rate(elapsed),
+            Linear { a, b } => pace::Linear { a: a.clone(), b: b.clone() }.rate(elapsed),
         }
     }
 }
@@ -91,7 +107,7 @@ impl Default for ExitKind {
 }
 
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
-pub struct ValidationDef {
+pub struct Validation {
     name: String,
     status_code: u32,
 }
@@ -145,7 +161,7 @@ mod tests {
                         per: Duration::from_secs(1)
                     },
                     idle_timeout: Some(Duration::from_secs(10)),
-                    validation: Some(vec![ValidationDef {
+                    validation: Some(vec![Validation {
                         name: "status = 200".to_owned(),
                         status_code: 200
                     }]),

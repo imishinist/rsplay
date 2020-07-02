@@ -2,6 +2,7 @@ use crate::pace::Pacer;
 use crate::data::Scenario;
 use log::{error, info};
 use std::time::Duration;
+use crate::pace;
 
 #[derive(Debug)]
 pub struct Runner {
