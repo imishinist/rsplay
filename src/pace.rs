@@ -58,16 +58,16 @@ impl Pacer for Rate {
 
 #[derive(Clone, Debug, PartialEq)]
 pub struct Linear {
-    pub a: f64,
-    pub b: f64,
+    pub a: u64,
+    pub b: u64,
 }
 
 impl Pacer for Linear {
-    fn pace(&self, elapsed: Duration, hits: u64) -> (Duration, bool) {
+    fn pace(&self, _elapsed: Duration, _hits: u64) -> (Duration, bool) {
         unimplemented!()
     }
 
-    fn rate(&self, elapsed: Duration) -> f64 {
+    fn rate(&self, _elapsed: Duration) -> f64 {
         unimplemented!()
     }
 }

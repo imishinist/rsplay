@@ -37,12 +37,29 @@ impl Scenario {
     }
 
     pub fn duration(&self) -> Duration {
+        let pace = self.pace.clone();
         match self.exit {
             ExitKind::Period(t) => t,
             ExitKind::Count(cnt) => {
-                let sec = cnt as f64 / self.pace.rate(Duration::from_secs(0));
+                let sec = cnt as f64 / pace.rate(Duration::from_secs(0));
                 Duration::from_secs(sec as u64)
             }
+        }
+    }
+}
+
+impl pace::Pacer for Pace {
+    fn pace(&self, elapsed: Duration, hits: u64) -> (Duration, bool) {
+        match self {
+            Pace::Rate(inner) => pace::Rate{ freq: inner.freq, per: inner.per }.pace(elapsed, hits),
+            Pace::Linear(inner) => pace::Linear{ a: inner.a, b: inner.b }.pace(elapsed, hits),
+        }
+    }
+
+    fn rate(&self, elapsed: Duration) -> f64 {
+        match self {
+            Pace::Rate(inner) => pace::Rate{ freq: inner.freq, per: inner.per }.rate(elapsed),
+            Pace::Linear(inner) => pace::Linear{ a: inner.a, b: inner.b }.rate(elapsed),
         }
     }
 }
@@ -51,43 +68,45 @@ impl Scenario {
 #[serde(untagged)]
 pub enum Pace {
     #[serde(rename = "rate")]
-    Rate {
-        freq: u64,
-        #[serde(with = "humantime_serde")]
-        per: Duration,
-    },
-    Linear {
-        a: f64,
-        b: f64,
+    Rate(InnerRate),
+    #[serde(rename = "linear")]
+    Linear(InnerLinear),
+}
+
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
+pub struct InnerRate {
+    freq: u64,
+    #[serde(with = "humantime_serde")]
+    per: Duration,
+}
+
+impl Into<pace::Rate> for InnerRate {
+    fn into(self) -> pace::Rate {
+        pace::Rate { freq: self.freq, per: self.per }
+    }
+}
+
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
+pub struct InnerLinear {
+    a: u64,
+    b: u64,
+}
+
+impl Into<pace::Linear> for InnerLinear {
+    fn into(self) -> pace::Linear {
+        pace::Linear { a: self.a, b: self.b }
     }
 }
 
 impl Default for Pace {
     fn default() -> Self {
-        use Pace::*;
         // 1 req/s
-        Rate {
-            freq: 1,
-            per: Duration::from_secs(1),
-        }
-    }
-}
-
-impl Pacer for Pace {
-    fn pace(&self, elapsed: Duration, hits: u64) -> (Duration, bool) {
-        use Pace::*;
-        match self {
-            Rate { freq, per } => pace::Rate {freq: freq.clone(), per: per.clone()  }.pace(elapsed, hits),
-            Linear { a, b } => pace::Linear { a: a.clone(), b: b.clone() }.pace(elapsed, hits),
-        }
-    }
-
-    fn rate(&self, elapsed: Duration) -> f64 {
-        use Pace::*;
-        match self {
-            Rate { freq, per } => pace::Rate {freq: freq.clone(), per: per.clone()  }.rate(elapsed),
-            Linear { a, b } => pace::Linear { a: a.clone(), b: b.clone() }.rate(elapsed),
-        }
+        Pace::Rate(
+            InnerRate {
+                freq: 1,
+                per: Duration::from_secs(1),
+            }
+        )
     }
 }
 
@@ -156,10 +175,10 @@ mod tests {
                     name: "normal-scenario".to_owned(),
                     url: Url::parse("http://localhost:8080/test?q=1").unwrap(),
                     exit: Count(100),
-                    pace: Rate {
+                    pace: Rate(InnerRate {
                         freq: 1,
                         per: Duration::from_secs(1)
-                    },
+                    }),
                     idle_timeout: Some(Duration::from_secs(10)),
                     validation: Some(vec![Validation {
                         name: "status = 200".to_owned(),
