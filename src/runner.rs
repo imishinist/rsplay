@@ -2,6 +2,7 @@ use crate::pace::Pacer;
 use crate::data::Scenario;
 use log::{error, info};
 use std::time::Duration;
+use std::pin::Pin;
 
 #[derive(Debug)]
 pub struct Runner {
@@ -13,9 +14,7 @@ impl Runner {
         Self { message_buf: 100 }
     }
 
-    pub async fn run<P>(&self, scenario: Scenario, pacer: P, run_duration: Duration)
-    where
-        P: Pacer + Send + 'static,
+    pub async fn run(&self, scenario: Scenario, pacer: Pin<Box<dyn Pacer + Send>>, run_duration: Duration)
     {
         let (mut tx, rx) = spmc::channel();
 

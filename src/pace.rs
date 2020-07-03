@@ -2,7 +2,7 @@ use std::default::Default;
 use std::ops::Sub;
 use std::time::Duration;
 
-pub trait Pacer : Send {
+pub trait Pacer {
     /// fn pace(&self, elapsed: Duration, hits: u64) -> (wait: Duration, stop: bool)
     fn pace(&self, elapsed: Duration, hits: u64) -> (Duration, bool);
     fn rate(&self, elapsed: Duration) -> f64;
@@ -55,23 +55,6 @@ impl Pacer for Rate {
         self.freq as f64 / self.per.as_nanos() as f64 * 1e9
     }
 }
-
-#[derive(Clone, Debug, PartialEq)]
-pub struct Linear {
-    pub a: u64,
-    pub b: u64,
-}
-
-impl Pacer for Linear {
-    fn pace(&self, _elapsed: Duration, _hits: u64) -> (Duration, bool) {
-        unimplemented!()
-    }
-
-    fn rate(&self, _elapsed: Duration) -> f64 {
-        unimplemented!()
-    }
-}
-
 
 #[cfg(test)]
 mod tests {
