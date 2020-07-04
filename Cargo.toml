@@ -18,3 +18,8 @@ serde = { version = "1.0.110", features = [ "derive" ] }
 serde_yaml = "0.8.12"
 tokio = { version = "0.2.21", features = [ "full" ] }
 spmc = "0.3.0"
+
+[dev-dependencies.cargo-husky]
+version = "1.5.0"
+default-features = false # Disable features which are enabled by default
+features = ["precommit-hook", "postmerge-hook", "run-cargo-test", "run-cargo-fmt", "run-cargo-check", "run-cargo-clippy"]

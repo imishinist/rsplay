@@ -64,7 +64,7 @@ impl Validator {
 
 #[cfg(test)]
 mod tests {
-    use crate::validator::{ValidationError};
+    use crate::validator::ValidationError;
 
     #[test]
     fn error_test() {
