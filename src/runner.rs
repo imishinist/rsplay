@@ -1,8 +1,9 @@
-use crate::pace::Pacer;
 use crate::data::Scenario;
-use log::{error, info};
-use std::time::Duration;
+use crate::pace::Pacer;
+use crate::validator::Validator;
+use log::{error, info, warn};
 use std::pin::Pin;
+use std::time::Duration;
 
 #[derive(Debug)]
 pub struct Runner {
@@ -14,8 +15,13 @@ impl Runner {
         Self { message_buf: 100 }
     }
 
-    pub async fn run(&self, scenario: Scenario, pacer: Pin<Box<dyn Pacer + Send>>, run_duration: Duration)
-    {
+    pub async fn run(
+        &self,
+        scenario: Scenario,
+        validator: Validator,
+        pacer: Pin<Box<dyn Pacer + Send>>,
+        run_duration: Duration,
+    ) {
         let (mut tx, rx) = spmc::channel();
 
         let client = reqwest::ClientBuilder::new()
@@ -23,6 +29,7 @@ impl Runner {
             .build()
             .unwrap();
         let url = scenario.url();
+        let validator = validator.clone();
         info!("start scenario run");
         tokio::spawn(async move {
             let start = std::time::Instant::now();
@@ -54,6 +61,7 @@ impl Runner {
 
         let workers = (0..2)
             .map(|_| {
+                let validator = validator.clone();
                 let client = client.clone();
                 let rx = rx.clone();
                 let url = url.clone();
@@ -67,7 +75,10 @@ impl Runner {
                                 return;
                             }
                         };
-                        info!("status = {}", response.status());
+                        match validator.validate(response) {
+                            Ok(_) => info!("OK"),
+                            Err(err) => warn!("{}", err),
+                        }
                     }
                 })
             })

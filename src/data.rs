@@ -1,12 +1,11 @@
 use crate::pace::{self, Pacer};
 use crate::url_format;
 use reqwest::Url;
-use serde::{Serialize, Deserialize};
-use std::time::Duration;
-use std::path::Path;
+use serde::{Deserialize, Serialize};
 use std::fs::File;
+use std::path::Path;
 use std::pin::Pin;
-
+use std::time::Duration;
 
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
 pub struct Scenario {
@@ -25,7 +24,7 @@ pub struct Scenario {
     pub idle_timeout: Option<Duration>,
 
     #[serde(default)]
-    validation: Option<Vec<Validation>>,
+    pub validation: Option<Vec<Validation>>,
 }
 
 impl Scenario {
@@ -53,13 +52,17 @@ impl Scenario {
             }
         }
     }
+
+    pub fn validations(&self) -> Option<Vec<Validation>> {
+        self.validation.clone()
+    }
 }
 
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
 #[serde(untagged)]
 pub enum Pace {
     #[serde(rename = "rate")]
-    Rate{
+    Rate {
         freq: u64,
 
         #[serde(with = "humantime_serde")]
@@ -94,10 +97,9 @@ impl Default for ExitKind {
 
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
 pub struct Validation {
-    name: String,
-    status_code: u32,
+    pub name: String,
+    pub status_code: u16,
 }
-
 
 pub fn load<P: AsRef<Path>>(filename: P) -> anyhow::Result<Vec<Scenario>> {
     let file = File::open(filename)?;
@@ -105,9 +107,9 @@ pub fn load<P: AsRef<Path>>(filename: P) -> anyhow::Result<Vec<Scenario>> {
 }
 #[cfg(test)]
 mod tests {
+    use super::{ExitKind::*, Pace::*, *};
     use reqwest::Url;
     use std::time::Duration;
-    use super::{*, Pace::*, ExitKind::*};
 
     fn to_scenarios(scenario_str: &str) -> Vec<Scenario> {
         serde_yaml::from_str(scenario_str).unwrap()

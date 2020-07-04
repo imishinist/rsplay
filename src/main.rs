@@ -1,6 +1,6 @@
 use clap::{value_t_or_exit, App, Arg, ArgMatches};
 use log::error;
-use rsplay::{scenario, data};
+use rsplay::{data, scenario};
 
 struct CommandOption {
     scenario_file: String,
