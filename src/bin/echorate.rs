@@ -1,6 +1,6 @@
 use std::env;
 use std::sync::atomic::{AtomicUsize, Ordering};
-use std::time::Duration;
+use std::time::{Duration, Instant};
 
 use actix_web::{web, App, HttpRequest, HttpServer, Responder};
 use tokio::time;
@@ -8,21 +8,19 @@ use tokio::time;
 static COUNTER: AtomicUsize = AtomicUsize::new(0usize);
 
 async fn index(_req: HttpRequest) -> impl Responder {
-    COUNTER.fetch_add(1, Ordering::SeqCst);
-    let counter = COUNTER.load(Ordering::SeqCst);
-    format!("{}", counter)
+    format!("{}", COUNTER.fetch_add(1, Ordering::SeqCst))
 }
 
 async fn do_main(addr: &str) -> std::io::Result<()> {
     let handle = async {
-        let mut instant = time::Instant::now();
+        let mut instant = Instant::now();
         let mut interval = time::interval(Duration::from_secs(1));
         loop {
             interval.tick().await;
             let rate = COUNTER.swap(0, Ordering::SeqCst) as f64
                 / (instant.elapsed().as_millis() + 1) as f64
                 * 1000.0;
-            instant = time::Instant::now();
+            instant = Instant::now();
             println!("Rate: {:.3}/s", rate);
         }
     };
