@@ -1,6 +1,7 @@
 use clap::{value_t_or_exit, App, Arg, ArgMatches};
 use log::error;
 use rsplay::{data, scenario};
+use std::process;
 
 struct CommandOption {
     scenario_file: String,
@@ -22,7 +23,7 @@ async fn do_main(scenarios: Vec<data::Scenario>) {
 }
 
 #[tokio::main]
-async fn main() -> Result<(), Box<dyn std::error::Error>> {
+async fn main() {
     env_logger::init();
     let app = App::new("rsplay")
         .version("0.1.0")
@@ -37,11 +38,10 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         );
 
     let opt = get_option(app.get_matches());
-    let scenarios = data::load(opt.scenario_file).map_err(|err| {
+    let scenarios = data::load(opt.scenario_file).unwrap_or_else(|err| {
         error!("load scenario error: {:?}", err);
-        err
-    })?;
+        process::exit(1);
+    });
 
     do_main(scenarios).await;
-    Ok(())
 }
