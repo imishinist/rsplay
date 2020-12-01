@@ -1,6 +1,7 @@
 use clap::{Clap, ValueHint};
+use futures::future;
 use log::error;
-use rsplay::{data, scenario};
+use rsplay::{data, scenario, Scenario};
 use std::path::PathBuf;
 use std::process;
 
@@ -11,10 +12,10 @@ struct Opts {
     scenario: PathBuf,
 }
 
-async fn do_main(scenarios: Vec<data::Scenario>) {
+async fn do_main(scenarios: Vec<Scenario>) {
     let tasks = scenarios.into_iter().map(scenario::run).collect::<Vec<_>>();
 
-    futures::future::join_all(tasks).await;
+    future::join_all(tasks).await;
 }
 
 #[tokio::main]

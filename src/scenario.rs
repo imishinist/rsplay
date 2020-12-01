@@ -1,5 +1,5 @@
 use crate::data::Scenario;
-use crate::runner;
+use crate::runner::Runner;
 use crate::validator::Validator;
 
 pub async fn run(scenario: Scenario) {
@@ -7,7 +7,7 @@ pub async fn run(scenario: Scenario) {
     let pacer = scenario.pacer();
     let duration = scenario.duration();
 
-    runner::Runner::new()
+    Runner::new()
         .run(scenario.clone(), validator, pacer, duration)
         .await;
 }

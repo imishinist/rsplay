@@ -1,9 +1,12 @@
 use crate::data::Scenario;
 use crate::pace::Pacer;
 use crate::validator::Validator;
+use futures::future;
 use log::{error, info, warn};
+use reqwest::ClientBuilder;
 use std::pin::Pin;
-use std::time::Duration;
+use std::time::{Duration, Instant};
+use tokio::time;
 
 #[derive(Debug)]
 pub struct Runner {
@@ -24,7 +27,7 @@ impl Runner {
     ) {
         let (mut tx, rx) = spmc::channel();
 
-        let client = reqwest::ClientBuilder::new()
+        let client = ClientBuilder::new()
             .pool_idle_timeout(scenario.idle_timeout)
             .build()
             .unwrap();
@@ -32,7 +35,7 @@ impl Runner {
         let validator = validator.clone();
         info!("start scenario run");
         tokio::spawn(async move {
-            let start = std::time::Instant::now();
+            let start = Instant::now();
             let mut count = 0;
             loop {
                 let elapsed = start.elapsed();
@@ -48,7 +51,7 @@ impl Runner {
                 }
 
                 if wait.as_nanos() != 0 {
-                    tokio::time::delay_for(wait).await;
+                    time::delay_for(wait).await;
                 }
 
                 if let Err(err) = tx.send(()) {
@@ -83,6 +86,6 @@ impl Runner {
                 })
             })
             .collect::<Vec<_>>();
-        futures::future::join_all(workers).await;
+        future::join_all(workers).await;
     }
 }

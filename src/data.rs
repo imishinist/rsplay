@@ -1,5 +1,7 @@
 use crate::pace::{self, Pacer};
 use crate::url_format;
+use anyhow::Result;
+use pace::Rate;
 use reqwest::Url;
 use serde::{Deserialize, Serialize};
 use std::fs::File;
@@ -39,7 +41,7 @@ impl Scenario {
     pub fn pacer(&self) -> Pin<Box<dyn Pacer + Send>> {
         let pace = self.pace.clone();
         match pace {
-            Pace::Rate { freq, per } => Box::pin(pace::Rate { freq, per }),
+            Pace::Rate { freq, per } => Box::pin(Rate { freq, per }),
         }
     }
 
@@ -101,13 +103,13 @@ pub struct Validation {
     pub status_code: u16,
 }
 
-pub fn load<P: AsRef<Path>>(filename: P) -> anyhow::Result<Vec<Scenario>> {
+pub fn load<P: AsRef<Path>>(filename: P) -> Result<Vec<Scenario>> {
     let file = File::open(filename)?;
     Ok(serde_yaml::from_reader(file)?)
 }
 #[cfg(test)]
 mod tests {
-    use super::{ExitKind::*, Pace::*, *};
+    use super::{ExitKind::*, *};
     use reqwest::Url;
     use std::time::Duration;
 
@@ -144,7 +146,7 @@ mod tests {
                     name: "normal-scenario".to_owned(),
                     url: Url::parse("http://localhost:8080/test?q=1").unwrap(),
                     exit: Count(100),
-                    pace: Rate {
+                    pace: Pace::Rate {
                         freq: 1,
                         per: Duration::from_secs(1)
                     },
