@@ -67,7 +67,7 @@ impl Runner {
                 let url = url.clone();
                 tokio::spawn(async move {
                     info!("worker spawn");
-                    while let Ok(_) = rx.recv() {
+                    while rx.recv().is_ok() {
                         let response = match client.get(url.as_str()).send().await {
                             Ok(res) => res,
                             Err(e) => {

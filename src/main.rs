@@ -12,10 +12,7 @@ struct Opts {
 }
 
 async fn do_main(scenarios: Vec<data::Scenario>) {
-    let tasks = scenarios
-        .into_iter()
-        .map(|scenario| scenario::run(scenario))
-        .collect::<Vec<_>>();
+    let tasks = scenarios.into_iter().map(scenario::run).collect::<Vec<_>>();
 
     futures::future::join_all(tasks).await;
 }
