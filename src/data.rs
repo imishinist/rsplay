@@ -38,10 +38,17 @@ impl Scenario {
         &self.url
     }
 
-    pub fn pacer(&self) -> Pin<Box<dyn Pacer + Send>> {
+    pub fn pinned_pacer(&self) -> Pin<Box<dyn Pacer + Send>> {
         let pace = self.pace.clone();
         match pace {
             Pace::Rate { freq, per } => Box::pin(Rate { freq, per }),
+        }
+    }
+
+    pub fn pacer(&self) -> Box<dyn Pacer + Send> {
+        let pace = self.pace.clone();
+        match pace {
+            Pace::Rate { freq, per } => Box::new(Rate { freq, per }),
         }
     }
 
@@ -49,7 +56,7 @@ impl Scenario {
         match self.exit {
             ExitKind::Period(t) => t,
             ExitKind::Count(cnt) => {
-                let sec = cnt as f64 / self.pacer().rate(Duration::from_secs(0));
+                let sec = cnt as f64 / self.pinned_pacer().rate(Duration::from_secs(0));
                 Duration::from_secs(sec as u64)
             }
         }
